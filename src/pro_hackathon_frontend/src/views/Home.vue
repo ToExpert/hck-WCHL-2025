@@ -1,65 +1,63 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-// 1. Import actor backend
+import { ref } from 'vue';
+import { useRouter } from 'vue-router'; // Import useRouter
 import { pro_hackathon_backend } from 'declarations/pro_hackathon_backend/index';
 
-// 2. Siapkan variabel reaktif untuk UI
-const isLoading = ref(false);      // Untuk menampilkan pesan "Loading..."
-const userInfo = ref(null);        // Untuk menyimpan data pengguna setelah login
-const errorMsg = ref('');          // Untuk menampilkan pesan error jika terjadi
+const router = useRouter(); // Inisialisasi router
+const modalView = ref('login');
+const registerForm = ref({ username: '', email: '', password: '' });
+const loginForm = ref({ username: '', password: '' });
+const isLoading = ref(false);
+const message = ref('');
 
-// Kredensial Google
-const GOOGLE_CLIENT_ID = "241378077010-fl2b4kdil8o8qvj2k6j1ou2m3et3gen7.apps.googleusercontent.com";
-const REDIRECT_URI = "http://127.0.0.1:3000";
-
-// 3. Fungsi untuk memulai alur login
-function handleLoginClick() {
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=openid%20email%20profile&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&client_id=${GOOGLE_CLIENT_ID}`;
-  window.location.href = authUrl;
-}
-
-// 4. Fungsi untuk mengirim 'code' ke backend
-async function verifyCodeToBackend(authCode) {
+// Fungsi handleRegister (tidak berubah)
+async function handleRegister() {
   isLoading.value = true;
-  errorMsg.value = '';
+  message.value = '';
   try {
-    // Panggil fungsi di canister backend dengan 'tiket' yang didapat
-    const responseText = await pro_hackathon_backend.handle_google_code(authCode);
-
-    // Backend mengembalikan data pengguna dalam bentuk JSON string, kita parse di sini
-    const userData = JSON.parse(responseText);
-
-    // Jika ada properti error di respons, tampilkan sebagai error
-    if (userData.error) {
-      throw new Error(userData.error);
-    }
-
-    // Simpan data pengguna ke state
-    userInfo.value = userData;
-
-    // INILAH TUJUAN KITA: Tampilkan data di console browser
-    console.log("✅ Data Pengguna dari Google:", userInfo.value);
-
-  } catch (err) {
-    console.error("Gagal verifikasi atau parsing:", err);
-    errorMsg.value = `Terjadi error: ${err.message}`;
+    const result = await pro_hackathon_backend.register(
+      registerForm.value.username, registerForm.value.email, registerForm.value.password
+    );
+    if (result.ok) {
+      message.value = result.ok;
+      setTimeout(() => {
+        modalView.value = 'login';
+        message.value = '';
+        registerForm.value = { username: '', email: '', password: '' };
+      }, 2000);
+    } else { throw new Error(result.err); }
+  } catch (error) {
+    message.value = `Error: ${error.message}`;
   } finally {
     isLoading.value = false;
   }
 }
 
-// 5. Kode ini berjalan saat halaman dimuat untuk menangkap redirect
-onMounted(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const authCode = urlParams.get('code');
-
-  if (authCode) {
-    // Hapus parameter dari URL agar bersih
-    window.history.replaceState({}, document.title, window.location.pathname);
-    // Langsung panggil fungsi untuk verifikasi ke backend
-    verifyCodeToBackend(authCode);
+// PERUBAHAN: Fungsi handleLogin sekarang memiliki logika
+async function handleLogin() {
+  isLoading.value = true;
+  message.value = '';
+  try {
+    const result = await pro_hackathon_backend.login(
+      loginForm.value.username,
+      loginForm.value.password
+    );
+    if (result.ok) {
+      const loggedInUser = result.ok;
+      console.log("✅ Login berhasil:", loggedInUser);
+      // Tutup modal (jika menggunakan Flowbite, ini perlu cara khusus, tapi untuk sekarang kita redirect)
+      // Untuk hackathon, redirect langsung adalah cara termudah
+      router.push('/dashboard');
+    } else {
+      throw new Error(result.err);
+    }
+  } catch (error) {
+    message.value = `Error: ${error.message}`;
+  } finally {
+    isLoading.value = false;
   }
-});
+}
+
 </script>
 
 <template>
@@ -84,31 +82,16 @@ onMounted(() => {
               platform aman dan terdesentralisasi untuk mencatat, melacak, dan mengelola semua riwayat kesehatanmu.
               Datamu milikmu, selamanya.</p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button @click="handleLoginClick"
-                class="bg-red-500 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-red-600 transition duration-300 ease-in-out inline-block w-full sm:w-auto text-sm sm:text-base">
-                Login dengan Google
+              <button data-modal-target="auth-modal" data-modal-toggle="auth-modal"
+                class="bg-red-500 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-red-600 transition duration-300 ease-in-out inline-block w-full sm:w-auto text-sm sm:text-base cursor-pointer"
+                type="button">
+                Login / Daftar
               </button>
-              <router-link class="bg-white text-red-500 border border-red-500 font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition duration-300 ease-in-out inline-block w-full sm:w-auto text-sm sm:text-base" to="/create">Lihat Source Code</router-link>
+              <router-link
+                class="bg-white text-red-500 border border-red-500 font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition duration-300 ease-in-out inline-block w-full sm:w-auto text-sm sm:text-base"
+                to="/create">Lihat Source Code</router-link>
             </div>
           </div>
-
-          <div v-else-if="isLoading">
-            <p class="text-lg text-gray-600">Memverifikasi login, harap tunggu...</p>
-          </div>
-
-          <div v-else-if="userInfo"
-            class="text-left bg-green-50 border border-green-200 p-6 rounded-lg max-w-md mx-auto">
-            <p class="text-2xl font-semibold text-green-800">✅ Login Sukses!</p>
-            <img :src="userInfo.picture" alt="User avatar"
-              class="w-20 h-20 rounded-full mx-auto my-4 border-2 border-green-200" />
-            <p class="text-center text-lg text-gray-800">Selamat datang, <span class="font-bold">{{ userInfo.name
-                }}</span>!</p>
-            <p class="text-center text-sm text-gray-600">{{ userInfo.email }}</p>
-            <p class="text-xs text-gray-500 mt-4 text-center">Data lengkap telah dicetak di console browser (F12).</p>
-          </div>
-
-          <p v-if="errorMsg" class="mt-4 text-red-600">{{ errorMsg }}</p>
-
         </div>
       </main>
 
@@ -118,14 +101,22 @@ onMounted(() => {
           <div class="flex justify-center items-center gap-6 sm:gap-8 md:gap-12">
 
             <div class="flex items-center gap-2 grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition">
-              <svg class="h-5 sm:h-6 w-5 sm:w-6" fill="currentColor" viewBox="0 0 128 128"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M64 0a64 64 0 1064 64A64 64 0 0064 0zm0 119.2a55.2 55.2 0 1155.2-55.2A55.2 55.2 0 0164 119.2z" />
-                <path
-                  d="M101.44 26.56a36.48 36.48 0 00-51.52-5.28L40 31.2l-5.28-9.92A54.72 54.72 0 01103.36 58.4l1.92-3.84a36.48 36.48 0 00-3.84-28zM31.2 40L21.28 45.28a36.48 36.48 0 005.28 51.52L36.48 87.l9.92 5.28A54.72 54.72 0 0114.72 55.2l3.84-1.92a36.48 36.48 0 0012.64-11.28z" />
-                <path
-                  d="M96.8 31.2L55.2 55.2 45.28 40l-9.92 5.28L40 55.2l-5.28 9.92L45.28 72l-5.28 9.92L50 87.2l5.28-9.92 41.52-24.32L106.88 48l-9.92-5.28L87 32.8l9.92-5.28z" />
+              <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 358.8 179.8"
+                style="enable-background:new 0 0 358.8 179.8;" xml:space="preserve" class="h-6 w-auto text-gray-500">
+
+                <path fill="currentColor"
+                  d="M271.6,0c-20,0-41.9,10.9-65,32.4c-10.9,10.1-20.5,21.1-27.5,29.8c0,0,11.2,12.9,23.5,26.8
+c6.7-8.4,16.2-19.8,27.3-30.1c20.5-19.2,33.9-23.1,41.6-23.1c28.8,0,52.2,24.2,52.2,54.1c0,29.6-23.4,53.8-52.2,54.1
+c-1.4,0-3-0.2-5-0.6c8.4,3.9,17.5,6.7,26,6.7c52.8,0,63.2-36.5,63.8-39.1c1.5-6.7,2.4-13.7,2.4-20.9C358.6,40.4,319.6,0,271.6,0z" />
+                <path fill="currentColor"
+                  d="M87.1,179.8c20,0,41.9-10.9,65-32.4c10.9-10.1,20.5-21.1,27.5-29.8c0,0-11.2-12.9-23.5-26.8
+c-6.7,8.4-16.2,19.8-27.3,30.1c-20.5,19-34,23.1-41.6,23.1c-28.8,0-52.2-24.2-52.2-54.1c0-29.6,23.4-53.8,52.2-54.1
+c1.4,0,3,0.2,5,0.6c-8.4-3.9-17.5-6.7-26-6.7C13.4,29.6,3,66.1,2.4,68.8C0.9,75.5,0,82.5,0,89.7C0,139.4,39,179.8,87.1,179.8z" />
+                <path fill="currentColor" d="M127.3,59.7c-5.8-5.6-34-28.5-61-29.3C18.1,29.2,4,64.2,2.7,68.7C12,29.5,46.4,0.2,87.2,0
+c33.3,0,67,32.7,91.9,62.2c0,0,0.1-0.1,0.1-0.1c0,0,11.2,12.9,23.5,26.8c0,0,14,16.5,28.8,31c5.8,5.6,33.9,28.2,60.9,29
+c49.5,1.4,63.2-35.6,63.9-38.4c-9.1,39.5-43.6,68.9-84.6,69.1c-33.3,0-67-32.7-92-62.2c0,0.1-0.1,0.1-0.1,0.2
+c0,0-11.2-12.9-23.5-26.8C156.2,90.8,142.2,74.2,127.3,59.7z M2.7,69.1c0-0.1,0-0.2,0.1-0.3C2.7,68.9,2.7,69,2.7,69.1z" />
               </svg>
               <span class="font-semibold text-xs sm:text-base">Internet Computer</span>
             </div>
@@ -138,7 +129,6 @@ onMounted(() => {
               </svg>
               <span class="font-semibold text-xs sm:text-base">Tailwind CSS</span>
             </div>
-
             <div class="flex items-center gap-2 grayscale opacity-60 hover:opacity-100 hover:grayscale-0 transition">
               <svg class="h-5 sm:h-6 w-5 sm:w-6" fill="currentColor" viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg">
@@ -162,5 +152,82 @@ onMounted(() => {
       </div>
     </div>
 
+  </div>
+  <div id="auth-modal" tabindex="-1" aria-hidden="true"
+    class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative bg-white rounded-lg shadow-sm">
+        <div class="flex items-center justify-center p-2">
+          <div class="flex-1 flex">
+            <button @click="modalView = 'login'" class="w-full py-3 text-sm font-semibold"
+              :class="modalView === 'login' ? 'text-red-600' : 'text-gray-500 hover:text-gray-800'">
+              Masuk
+            </button>
+            <button @click="modalView = 'register'" class="w-full py-3 text-sm font-semibold"
+              :class="modalView === 'register' ? 'text-red-600' : 'text-gray-500 hover:text-gray-800'">
+              Daftar
+            </button>
+          </div>
+          <button type="button"
+            class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center"
+            data-modal-hide="auth-modal">
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 14 14">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+            </svg>
+            <span class="sr-only">Close modal</span>
+          </button>
+        </div>
+
+        <div class="p-4 md:p-5 pt-0">
+          <form v-if="modalView === 'login'" @submit.prevent="handleLogin" class="space-y-4">
+            <div>
+              <label for="login-username" class="block mb-2 text-sm font-medium text-gray-900">Username</label>
+              <input v-model="loginForm.username" type="text" name="login-username" id="login-username"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+                placeholder="Masukkan username Anda" required />
+            </div>
+            <div>
+              <label for="login-password" class="block mb-2 text-sm font-medium text-gray-900">Password</label>
+              <input v-model="loginForm.password" type="password" name="login-password" id="login-password"
+                placeholder="••••••••"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+                required />
+            </div>
+            <button type="submit" :disabled="isLoading"
+              class="w-full text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-semibold rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-red-300 disabled:cursor-not-allowed">
+              {{ isLoading ? 'Memproses...' : 'Masuk ke Akun Anda' }}
+            </button>
+          </form>
+
+          <form v-if="modalView === 'register'" @submit.prevent="handleRegister" class="space-y-4" action="#">
+            <div>
+              <label for="register-username" class="block mb-2 text-sm font-medium text-gray-900">Username</label>
+              <input v-model="registerForm.username" type="text" name="register-username" id="register-username"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+                placeholder="Pilih username unik" required />
+            </div>
+            <div>
+              <label for="register-email" class="block mb-2 text-sm font-medium text-gray-900">Email Anda</label>
+              <input v-model="registerForm.email" type="email" name="register-email" id="register-email"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+                placeholder="nama@email.com" required />
+            </div>
+            <div>
+              <label for="register-password" class="block mb-2 text-sm font-medium text-gray-900">Buat Password</label>
+              <input v-model="registerForm.password" type="password" name="register-password" id="register-password"
+                placeholder="••••••••"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5"
+                required />
+            </div>
+
+            <button :disabled="isLoading"
+              class="w-full text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-semibold rounded-lg text-sm px-5 py-2.5 text-center disabled:bg-red-300 disabled:cursor-not-allowed">
+              {{ isLoading ? 'Mendaftar...' : 'Buat Akun' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
