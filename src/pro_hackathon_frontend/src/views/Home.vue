@@ -16,13 +16,13 @@
         <div class="container mx-auto px-4">
 
           <div v-if="!userInfo && !isLoading">
-            <h1 class="text-xl sm:text-2xl font-semibold text-red-600 mb-2">De-Health</h1>
-            <h2 class="text-3xl sm:text-4xl md:text-6xl font-semibold text-gray-900 leading-tight mb-3 sm:mb-4">
+            <h1 class="text-xl sm:text-2xl font-semibold text-red-600 mb-2 animate__fadeInDown animate__animated">De-Health</h1>
+            <h2 class="text-3xl sm:text-4xl md:text-6xl font-semibold text-gray-900 leading-tight mb-3 sm:mb-4 animate__fadeInDown animate__animated ">
               Kendalikan Riwayat Kesehatanmu.</h2>
-            <p class="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-6 sm:mb-8">De-Health adalah
+            <p class="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-6 sm:mb-8 animate__fadeInUp animate__animated">De-Health adalah
               platform aman dan terdesentralisasi untuk mencatat, melacak, dan mengelola semua riwayat kesehatanmu.
               Datamu milikmu, selamanya.</p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate__fadeInUp animate__animated">
               <router-link to="/login" data-modal-target="auth-modal" data-modal-toggle="auth-modal"
                 class="bg-red-500 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-red-600 transition duration-300 ease-in-out inline-block w-full sm:w-auto text-sm sm:text-base cursor-pointer"
                 type="button">
@@ -30,7 +30,7 @@
               </router-link>
               <a
                 class="bg-white text-red-500 border border-red-500 font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition duration-300 ease-in-out inline-block w-full sm:w-auto text-sm sm:text-base"
-                href="https://github.com/ToExpert/hck-WCHL-2025/tree/hello" target="_blank">Lihat Source Code</a>
+                href="https://github.com/ToExpert/hck-WCHL-2025" target="_blank">Lihat Source Code</a>
             </div>
           </div>
         </div>
