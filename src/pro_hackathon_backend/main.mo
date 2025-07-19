@@ -6,51 +6,27 @@ import Array "mo:base/Array";
 import Result "mo:base/Result";
 
 actor {
-    // --- TIPE DATA ---
-    type HealthRecord = {
-      id: Nat;
-      owner: Principal;
-      userName: Text;
-      startDate: Int;
-      endDate: ?Int;
-      symptoms: Text;
-      diagnosis: ?Text;
-      createdAt: Int;
-      updatedAt: Int;
-    };
+    // Tipe data
+    type HealthRecord = { id: Nat; owner: Principal; userName: Text; startDate: Int; endDate: ?Int; symptoms: Text; diagnosis: ?Text; createdAt: Int; updatedAt: Int; };
     type HealthRecordList = List.List<HealthRecord>;
-
-    type User = {
-        id: Principal;
-        username: Text;
-        email: Text;
-        password: Text; 
-    };
+    type User = { id: Principal; username: Text; email: Text; password: Text; };
     type UserList = List.List<User>;
+    type PublicUser = { id: Principal; username: Text; email: Text; };
 
-    // TAMBAHAN: Tipe data User tanpa password untuk dikirim ke frontend
-    type PublicUser = {
-        id: Principal;
-        username: Text;
-        email: Text;
-    };
-
-    // --- STATE (DATABASE) ---
     stable var records: HealthRecordList = List.nil<HealthRecord>();
     stable var nextId: Nat = 1;
     stable var users: UserList = List.nil<User>();
-    // --- FUNGSI REGISTER ---
+
     public shared (msg) func register(username: Text, email: Text, password: Text) : async Result.Result<Text, Text> {
         let caller = msg.caller;
         if (List.find<User>(users, func(u) { return u.id == caller or u.username == username; }) != null) {
-            return #err("Principal atau Username sudah terdaftar.");
+            return #err("Principal sudah pernah mendaftar.");
         };
         let newUser: User = { id = caller; username = username; email = email; password = password; };
         users := List.push<User>(newUser, users);
         return #ok("Pendaftaran berhasil! Silakan masuk.");
     };
     
-    // --- TAMBAHAN: FUNGSI LOGIN ---
     public query func login(username: Text, password: Text) : async Result.Result<PublicUser, Text> {
         // Gunakan List.find untuk mencari user berdasarkan username
         let foundUser = List.find<User>(users, func(user) {
@@ -77,8 +53,7 @@ actor {
             };
         };
     };
-    
-    // --- FUNGSI CREATE ---
+
     public shared (msg) func createRecord(
         userName: Text,
         startDate: Int,
@@ -104,7 +79,6 @@ actor {
         return newRecord;
     };
 
-    // --- FUNGSI GET ALL ---
     public query (msg) func getRecords() : async [HealthRecord] {
         let callerPrincipal = msg.caller;
         let filteredList = List.filter<HealthRecord>(records, func(record) {

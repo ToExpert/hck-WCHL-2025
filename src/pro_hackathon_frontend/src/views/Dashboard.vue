@@ -1,13 +1,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { pro_hackathon_backend } from 'declarations/pro_hackathon_backend/index';
 
 const route = useRoute();
+const router = useRouter();
 const records = ref([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
 const notification = ref('');
+const loggedInUser = ref(null); // State baru untuk menyimpan profil pengguna
 
 async function fetchRecords() {
   isLoading.value = true;
@@ -23,16 +25,28 @@ async function fetchRecords() {
 }
 
 onMounted(() => {
-  fetchRecords();
+  // Ambil data pengguna dari localStorage
+  const storedUser = localStorage.getItem('loggedInUser');
+  if (storedUser) {
+    loggedInUser.value = JSON.parse(storedUser);
+    // Jika sudah login, langsung ambil datanya
+    fetchRecords();
+  } else {
+    // Jika tidak ada sesi, paksa kembali ke halaman login
+    router.push('/login');
+    return; // Hentikan eksekusi
+  }
+
+  // Logika notifikasi (tidak berubah)
   const status = route.query.status;
   if (status === 'created') {
     notification.value = 'Catatan kesehatan baru berhasil ditambahkan!';
   } else if (status === 'deleted') {
     notification.value = 'Catatan berhasil dihapus.';
+  } else if (status === 'updated') {
+    notification.value = 'Catatan berhasil diperbarui!';
   }
-
-  if (route.query.status === 'created') {
-    notification.value = 'Catatan kesehatan baru berhasil ditambahkan!';
+  if (notification.value) {
     setTimeout(() => {
       notification.value = '';
     }, 4000);
@@ -45,6 +59,11 @@ const formatDate = (timestamp) => {
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   return date.toLocaleDateString('id-ID', options);
 };
+
+function handleLogout() {
+  localStorage.removeItem('loggedInUser');
+  router.push('/login');
+}
 </script>
 
 <template>
@@ -64,10 +83,16 @@ const formatDate = (timestamp) => {
             <h1 class="text-3xl sm:text-4xl font-semibold text-gray-900">Dashboard Kesehatan</h1>
             <p class="mt-2 text-gray-600">Semua catatan riwayat kesehatanmu yang tersimpan.</p>
           </div>
-          <router-link to="/create"
-            class="mt-4 sm:mt-0 bg-red-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-red-600 transition duration-300 ease-in-out inline-block">
-            + Catatan Baru
-          </router-link>
+          <div class="flex items-center gap-4 mt-4 sm:mt-0">
+            <router-link to="/create"
+              class="bg-red-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-red-600 transition duration-300 ease-in-out inline-block">
+              + Catatan Baru
+            </router-link>
+            <button @click="handleLogout"
+              class="bg-white text-gray-700 border border-gray-300 font-semibold py-2 px-5 rounded-lg hover:bg-gray-100 transition duration-300 ease-in-out">
+              Logout
+            </button>
+          </div>
         </div>
 
         <div v-if="isLoading" class="text-center text-gray-500">

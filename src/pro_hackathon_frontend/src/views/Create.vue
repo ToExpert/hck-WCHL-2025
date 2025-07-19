@@ -1,15 +1,14 @@
 <script setup>
-import { ref } from 'vue';
-// PERUBAHAN: Import useRouter untuk redirect
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-// Import actor backend
 import { pro_hackathon_backend } from 'declarations/pro_hackathon_backend/index';
 
-const router = useRouter(); // Inisialisasi router
+const router = useRouter();
 
 const record = ref({
+  // userName akan diisi secara otomatis dari localStorage
   userName: '',
-  ownerId: '',
+  // ownerId dihapus karena backend mengambilnya secara otomatis dari msg.caller
   startDate: '',
   endDate: '',
   symptoms: '',
@@ -19,12 +18,28 @@ const record = ref({
 const isLoading = ref(false);
 const message = ref('');
 
+// Dijalankan saat komponen dimuat
+onMounted(() => {
+  const storedUser = localStorage.getItem('loggedInUser');
+  if (storedUser) {
+    // Jika ada pengguna yang login, parse datanya
+    const user = JSON.parse(storedUser);
+    // Isi field userName secara otomatis
+    record.value.userName = user.username;
+  } else {
+    // Jika tidak ada yang login, paksa kembali ke halaman login
+    alert("Anda harus login untuk membuat catatan.");
+    router.push('/login');
+  }
+});
+
 async function handleCreateRecord() {
   isLoading.value = true;
   message.value = '';
 
-  if (!record.value.userName || !record.value.startDate || !record.value.symptoms) {
-    message.value = 'Error: Nama Pengguna, Tanggal Mulai Sakit, dan Gejala wajib diisi.';
+  // Validasi sekarang tidak perlu cek userName karena sudah otomatis
+  if (!record.value.startDate || !record.value.symptoms) {
+    message.value = 'Error: Tanggal Mulai Sakit dan Gejala wajib diisi.';
     isLoading.value = false;
     return;
   }
@@ -37,13 +52,14 @@ async function handleCreateRecord() {
     const diagnosisOpt = record.value.diagnosis ? [record.value.diagnosis] : [];
 
     const newRecord = await pro_hackathon_backend.createRecord(
-      record.value.userName,
+      record.value.userName, // Kirim userName yang sudah terisi otomatis
       startDateInt,
       endDateOpt,
       record.value.symptoms,
       diagnosisOpt
     );
 
+    // Arahkan ke dashboard dengan notifikasi setelah sukses
     router.push('/dashboard?status=created');
 
   } catch (error) {
@@ -76,23 +92,8 @@ async function handleCreateRecord() {
             <p class="text-gray-500 text-sm">Isi detail di bawah ini untuk memulai pelacakan.</p>
           </div>
 
-          <form @submit.prevent="handleCreateRecord" class="space-y-6 text-left">
 
-            <div>
-              <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pengguna <span
-                  class="text-red-500">*</span></label>
-              <input v-model="record.userName" type="text" id="userName"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition"
-                placeholder="Nama dari profil Google">
-            </div>
-            <div>
-              <label for="ownerId" class="block text-sm font-medium text-gray-700 mb-1">ID Pemilik (Principal) <span
-                  class="text-red-500">*</span></label>
-              <input v-model="record.ownerId" type="text" id="ownerId"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition"
-                placeholder="ID unik dari sistem login">
-            </div>
-            <hr class="my-4">
+          <form @submit.prevent="handleCreateRecord" class="space-y-6 text-left">
             <div>
               <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai Sakit <span
                   class="text-red-500">*</span></label>
@@ -110,7 +111,7 @@ async function handleCreateRecord() {
                   class="text-red-500">*</span></label>
               <textarea v-model="record.symptoms" id="symptoms" rows="4"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition"
-                placeholder="Contoh: Demam tinggi, sakit kepala, dan batuk kering..."></textarea>
+                placeholder="Contoh: Demam tinggi..."></textarea>
             </div>
             <div>
               <label for="diagnosis" class="block text-sm font-medium text-gray-700 mb-1">Diagnosis Penyakit
@@ -119,18 +120,15 @@ async function handleCreateRecord() {
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition"
                 placeholder="Contoh: Influenza Tipe A">
             </div>
-
             <div class="pt-2">
               <button type="submit" :disabled="isLoading"
-                class="cursor-pointer w-full bg-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-red-600 transition duration-300 ease-in-out disabled:bg-red-300 disabled:cursor-not-allowed">
+                class="w-full bg-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-red-600 transition ...">
                 {{ isLoading ? 'Menyimpan...' : 'Simpan Catatan' }}
               </button>
             </div>
-
           </form>
 
-          <div v-if="message" class="mt-6 text-center text-sm p-3 rounded-lg"
-            :class="{ 'bg-green-50 text-green-700': message.includes('Sukses'), 'bg-red-50 text-red-700': message.includes('Error') }">
+          <div v-if="message" class="mt-6 text-center ...">
             {{ message }}
           </div>
 

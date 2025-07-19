@@ -2,18 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Create from '../views/Create.vue';
-import Detail from '../views/Detail.vue'; // <-- 1. IMPORT KOMPONEN DETAIL
+import Detail from '../views/Detail.vue';
 import Edit from '../views/Edit.vue';
+import Masuk from '../views/Masuk.vue';
+import Daftar from '../views/Daftar.vue';
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
   { path: '/dashboard', name: 'Dashboard', component: Dashboard },
   { path: '/create', name: 'Create', component: Create },
-
-  // 2. TAMBAHKAN RUTE DINAMIS
-  // :id adalah parameter dinamis
-  { path: '/detail/:id', name: 'Detail', component: Detail, props: true },
-   { path: '/edit/:id', name: 'Edit', component: Edit },
+  { path: '/detail/:id', name: 'Detail', component: Detail },
+  { path: '/edit/:id', name: 'Edit', component: Edit },
+  { path: '/login', name: 'Masuk', component: Masuk },
+  { path: '/register', name: 'Daftar', component: Daftar },
 ];
 
 const router = createRouter({
