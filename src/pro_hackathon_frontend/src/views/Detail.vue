@@ -159,7 +159,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="isModalOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 transition-opacity"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 transition-opacity"
         @click.self="closeDeleteModal">
         <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
             <div class="flex items-start">
