@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "pro_hackathon-react-backend": {
+      "main": "src/pro_hackathon-react-backend/main.mo",
+      "type": "motoko"
+    },
+    "pro_hackathon-react-frontend": {
+      "dependencies": [
+        "pro_hackathon-react-backend"
+      ],
+      "source": [
+        "src/pro_hackathon-react-frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "pro_hackathon-react-frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
