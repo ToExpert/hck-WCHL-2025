@@ -1,30 +1,79 @@
-import { useState } from 'react';
-import { pro_hackathon_react_backend } from 'declarations/pro_hackathon-react-backend';
+import { useEffect, useState } from 'react';
+import { createActor } from 'declarations/pro_hackathon-react-backend';
+import { Route, Routes } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import Root from './pages/Root';
+import { AuthClient } from '@dfinity/auth-client';
+import { canisterId } from 'declarations/pro_hackathon-react-backend/index.js';
+import AuthSecurity from './pages/AuthSecurity';
+import GuestSecurity from './pages/GuestSecurity';
+import Create from './pages/Create';
+
+const network = process.env.DFX_NETWORK;
+const identityProvider =
+  network === 'ic'
+    ? 'https://identity.ic0.app' // Mainnet
+    : 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'; // Local
 
 function App() {
-  const [greeting, setGreeting] = useState('');
+  const [user, setUser] = useState({
+    actor: undefined,
+    authClient: undefined,
+    isAuth: false,
+  });
+  const [message, setMessage] = useState(null);
+  const [success, setSuccess] = useState(null);
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    const name = event.target.elements.name.value;
-    pro_hackathon_react_backend.greet(name).then((greeting) => {
-      setGreeting(greeting);
+  useEffect(() => {
+    updateActor();
+  }, []);
+
+  const updateActor = async () => {
+    const authClient = await AuthClient.create();
+    const identity = authClient.getIdentity();
+    const actor = createActor(canisterId, {
+      agentOptions: {
+        identity
+      }
     });
-    return false;
-  }
+    const isAuth = await authClient.isAuthenticated();
+
+    setUser((prev) => ({
+      ...prev,
+      actor,
+      authClient,
+      isAuth
+    }));
+  };
+
+  const login = async () => {
+    await user.authClient.login({
+      identityProvider,
+      onSuccess: updateActor
+    });
+  };
+
+  const logout = async () => {
+    await user.authClient.logout();
+    updateActor();
+  };
 
   return (
-    <main>
-      <img src="/logo2.svg" alt="DFINITY logo" />
-      <br />
-      <br />
-      <form action="#" onSubmit={handleSubmit}>
-        <label htmlFor="name">Enter your name: &nbsp;</label>
-        <input id="name" alt="Name" type="text" />
-        <button type="submit">Click Me!</button>
-      </form>
-      <section id="greeting">{greeting}</section>
-    </main>
+    <Routes>
+      <Route index element={<GuestSecurity isAuth={user.isAuth}>
+        <Root login={login} />
+      </GuestSecurity>} />
+      <Route path="/dashboard" element={<AuthSecurity user={user} isAuth={user.isAuth}>
+        <Dashboard user={user} logout={logout} message={message}
+          success={success}
+          setMessage={setMessage}
+          setSuccess={setSuccess} />
+      </AuthSecurity>} />
+      <Route path="/create" element={<AuthSecurity isAuth={user.isAuth}>
+        <Create user={user} setMessage={setMessage}
+          setSuccess={setSuccess} />
+      </AuthSecurity>} />
+    </Routes>
   );
 }
 
