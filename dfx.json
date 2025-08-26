@@ -1,5 +1,6 @@
 {
   "canisters": {
+<<<<<<< HEAD
     "pro_hackathon_backend": {
       "main": "src/pro_hackathon_backend/main.mo",
       "type": "motoko"
@@ -13,12 +14,42 @@
       ],
       "type": "assets",
       "workspace": "pro_hackathon_frontend"
+=======
+    "pro_hackathon-react-backend": {
+      "main": "src/pro_hackathon-react-backend/main.mo",
+      "type": "motoko"
+    },
+    "pro_hackathon-react-frontend": {
+      "dependencies": [
+        "pro_hackathon-react-backend"
+      ],
+      "source": [
+        "src/pro_hackathon-react-frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "pro_hackathon-react-frontend"
+    },
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "type": "custom",
+      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+>>>>>>> react
     }
   },
   "defaults": {
     "build": {
       "args": "",
+<<<<<<< HEAD
       "packtool": "mops sources"
+=======
+      "packtool": ""
+>>>>>>> react
     }
   },
   "output_env_file": ".env",
