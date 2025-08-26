@@ -60,7 +60,7 @@ cd hck-WCHL-2025
 npm install
 
 # Install frontend dependencies
-cd src/pro_hackathon_react_frontend
+cd src/pro_hackathon-react-frontend
 npm install
 cd ../..
 ```
@@ -85,7 +85,7 @@ dfx generate
 ### 5. Run the Frontend in Development Mode
 
 ```sh
-cd src/pro_hackathon_react_frontend
+cd src/pro_hackathon-react-frontend
 npm start
 ```
 
@@ -106,16 +106,16 @@ _All actions are securely tied to your Internet Computer identity._
 
 The frontend is built using React and Tailwind CSS.
 
-You can find the frontend code in [`src/pro_hackathon_react_frontend`](/src/pro_hackathon_react_frontend).
+You can find the frontend code in [`src/pro_hackathon-react-frontend`](/src/pro_hackathon-react-frontend).
 
 ## Backend Development
 
 The backend uses Motoko as the main language and Internet Identity.
 
-You can find the frontend code in [`src/pro_hackathon-react-backend`](/src/pro_hackathon-react-backend).
+You can find the backend code in [`src/pro_hackathon-react-backend`](/src/pro_hackathon-react-backend).
 
 ### Backend APIs (Motoko Canister)
-For full type definitions and logic, see [`main.mo`](/src/pro_hackathon_backend\main.mo).
+For full type definitions and logic, see [`main.mo`](/src/pro_hackathon_backend/main.mo).
 The backend exposes the following main functions:
 
 - `register(username: Text, email: Text, password: Text)` - Register a new user.
